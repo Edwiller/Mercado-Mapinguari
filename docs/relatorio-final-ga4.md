@@ -34,14 +34,15 @@ A versão com Analytics foi publicada pelo commit `e649d82`. A aplicação usa H
 
 ## 3. Configuração do Google Analytics 4
 
-- **Propriedade:** gasparzin-48f4e
+- **Propriedade:** Mercado Mapinguari
+- **ID da propriedade:** `565495656`
 - **Fluxo Web:** Mercado Mapinguari - Produção
-- **ID do fluxo:** `16394616175`
-- **ID de métricas:** `G-Q9LJEZSBRE`
+- **ID do fluxo:** `16394730378`
+- **ID de métricas:** `G-266Q4LL9GJ`
 - **URL configurada:** https://mercado-mapinguari.vercel.app
 - **Medição otimizada:** ativada
 
-O identificador foi salvo na Vercel como `VITE_GA_MEASUREMENT_ID` no ambiente de produção. A tag `gtag.js` só é carregada depois do consentimento explícito do visitante.
+Foi criada uma propriedade exclusiva para separar os dados do supermercado de outros projetos da conta. O identificador foi salvo na Vercel como `VITE_GA_MEASUREMENT_ID` no ambiente de produção. A tag `gtag.js` só é carregada depois do consentimento explícito do visitante.
 
 ![Fluxo Web configurado no GA4](evidencias/ga4-fluxo-web.png)
 
