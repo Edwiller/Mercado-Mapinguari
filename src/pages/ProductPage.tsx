@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FeedbackState } from '../components/FeedbackState'
 import { useCart } from '../hooks/useCart'
 import { getProductBySlug } from '../services/catalog'
 import type { Product } from '../types/product'
+import { analyticsItem, trackEvent } from '../lib/analytics'
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -14,12 +15,19 @@ export function ProductPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [added, setAdded] = useState(false)
+  const trackedProduct = useRef('')
 
   useEffect(() => {
     let active = true
     getProductBySlug(slug).then((data) => active && setProduct(data)).catch(() => active && setError(true)).finally(() => active && setLoading(false))
     return () => { active = false }
   }, [slug])
+
+  useEffect(() => {
+    if (!product || trackedProduct.current === product.id) return
+    trackedProduct.current = product.id
+    trackEvent('view_item', { currency: 'BRL', value: product.price, items: [analyticsItem(product)] })
+  }, [product])
 
   if (loading) return <section className="mx-auto min-h-[65vh] max-w-6xl px-5 py-12"><FeedbackState type="loading" /></section>
   if (error || !product) return <section className="mx-auto min-h-[65vh] max-w-6xl px-5 py-12"><h1 className="text-2xl font-black text-forest-950">Produto não encontrado</h1><Link className="mt-5 inline-block font-bold text-forest-700" to="/catalogo">Voltar ao catálogo</Link></section>

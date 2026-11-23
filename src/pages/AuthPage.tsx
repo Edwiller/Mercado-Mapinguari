@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Brand } from '../components/Brand'
 import { useAuth } from '../hooks/useAuth'
+import { trackEvent } from '../lib/analytics'
 
 type AuthMode = 'login' | 'signup'
 
@@ -42,9 +43,11 @@ export function AuthPage() {
     try {
       if (mode === 'login') {
         await signIn({ email, password })
+        trackEvent('login', { method: 'email' })
         navigate(destination, { replace: true })
       } else {
         const result = await signUp({ fullName, email, password })
+        trackEvent('sign_up', { method: 'email' })
         if (result.needsEmailConfirmation) {
           setSuccess('Cadastro criado. Verifique seu e-mail para confirmar a conta antes de entrar.')
           setMode('login')

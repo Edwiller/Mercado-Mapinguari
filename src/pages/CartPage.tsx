@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
+import { analyticsItem, trackEvent } from '../lib/analytics'
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -7,6 +9,16 @@ export function CartPage() {
   const { lines, itemCount, subtotal, loading, syncing, error, setQuantity, removeProduct, clearCart } = useCart()
   const shipping = subtotal >= 149 || subtotal === 0 ? 0 : 14.9
   const total = subtotal + shipping
+
+  useEffect(() => {
+    if (!loading && lines.length > 0) {
+      trackEvent('view_cart', {
+        currency: 'BRL',
+        value: subtotal,
+        items: lines.map(({ product, quantity }) => analyticsItem(product, quantity)),
+      })
+    }
+  }, [loading, lines, subtotal])
 
   if (loading) return <section className="mx-auto min-h-[60vh] max-w-6xl px-5 py-12 sm:px-8"><p className="text-stone-600">Carregando seu carrinho…</p></section>
 

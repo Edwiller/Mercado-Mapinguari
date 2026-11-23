@@ -5,6 +5,7 @@ import { useCart } from '../hooks/useCart'
 import { Brand } from './Brand'
 import { CartIcon, MenuIcon, PinIcon, SearchIcon, UserIcon } from './StoreIcons'
 import { StoreMenu } from './StoreMenu'
+import { trackEvent } from '../lib/analytics'
 
 export function StoreHeader() {
   const [search, setSearch] = useState('')
@@ -35,6 +36,7 @@ export function StoreHeader() {
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const term = search.trim()
+    if (term) trackEvent('search', { search_term: term })
     setMenuOpen(false)
     navigate(term ? `/catalogo?busca=${encodeURIComponent(term)}` : '/catalogo')
   }

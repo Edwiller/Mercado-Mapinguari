@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { AddressForm } from '../components/AddressForm'
 import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 import { checkoutCart, createAddress, getAddresses, type Address, type AddressInput } from '../services/account'
+import { analyticsItem, trackEvent } from '../lib/analytics'
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -31,6 +32,7 @@ export function CheckoutPage() {
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const checkoutTracked = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -42,6 +44,16 @@ export function CheckoutPage() {
     }).catch(() => active && setError('Não foi possível carregar seus endereços.')).finally(() => active && setLoading(false))
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    if (cartLoading || checkoutTracked.current || !lines.length) return
+    checkoutTracked.current = true
+    trackEvent('begin_checkout', {
+      currency: 'BRL',
+      value: subtotal,
+      items: lines.map((line, index) => analyticsItem(line.product, line.quantity, index)),
+    })
+  }, [cartLoading, lines, subtotal])
 
   if (!cartLoading && lines.length === 0 && !submitting && !completedOrderId) return <Navigate to="/carrinho" replace />
 
@@ -64,6 +76,15 @@ export function CheckoutPage() {
     setSubmitting(true)
     try {
       const order = await checkoutCart({ addressId, couponCode, paymentMethod, notes })
+      trackEvent('purchase', {
+        transaction_id: order.order_id,
+        currency: 'BRL',
+        value: Number(order.total),
+        shipping,
+        coupon: couponCode.trim() || undefined,
+        payment_type: paymentMethod,
+        items: lines.map((line, index) => analyticsItem(line.product, line.quantity, index)),
+      })
       setCompletedOrderId(order.order_id)
       navigate(`/pedidos/${order.order_id}`, { replace: true, state: { justCreated: true } })
       clearCart()

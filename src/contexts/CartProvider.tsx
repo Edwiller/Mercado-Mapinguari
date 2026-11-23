@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { getProducts } from '../services/catalog'
+import { analyticsItem, trackEvent } from '../lib/analytics'
 import type { Product } from '../types/product'
 import { CartContext, type CartLine } from './cart-context'
 
@@ -165,6 +166,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLines((current) => existing
       ? current.map((line) => line.product.id === product.id ? { ...line, quantity: nextQuantity } : line)
       : [...current, { product, quantity: nextQuantity }])
+    if (nextQuantity > (existing?.quantity ?? 0)) trackEvent('add_to_cart', { currency: 'BRL', value: product.price, items: [analyticsItem(product)] })
     syncLine(product.id, nextQuantity)
   }
 
@@ -172,6 +174,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const line = lines.find((item) => item.product.id === productId)
     if (!line) return
     const safeQuantity = Math.max(0, Math.min(quantity, line.product.stockQuantity))
+    const difference = safeQuantity - line.quantity
+    if (difference > 0) trackEvent('add_to_cart', { currency: 'BRL', value: line.product.price * difference, items: [analyticsItem(line.product, difference)] })
+    if (difference < 0) trackEvent('remove_from_cart', { currency: 'BRL', value: line.product.price * Math.abs(difference), items: [analyticsItem(line.product, Math.abs(difference))] })
     setLines((current) => safeQuantity === 0 ? current.filter((item) => item.product.id !== productId) : current.map((item) => item.product.id === productId ? { ...item, quantity: safeQuantity } : item))
     syncLine(productId, safeQuantity)
   }

@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { FeedbackState } from '../components/FeedbackState'
 import { ProductCard } from '../components/ProductCard'
 import { storeCategories } from '../data/categories'
 import { useProducts } from '../hooks/useProducts'
+import { analyticsItem, trackEvent } from '../lib/analytics'
 
 export function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -31,6 +32,14 @@ export function CatalogPage() {
 
   const selectedLabel = storeCategories.find((category) => category.slug === selected)?.name
     ?? 'Todos os produtos'
+
+  useEffect(() => {
+    if (loading || !filteredProducts.length) return
+    trackEvent('view_item_list', {
+      item_list_name: selectedLabel,
+      items: filteredProducts.slice(0, 20).map((product, index) => analyticsItem(product, 1, index)),
+    })
+  }, [filteredProducts, loading, selectedLabel])
 
   const setParam = (name: string, value: string, defaultValue: string) => {
     const next = new URLSearchParams(searchParams)
